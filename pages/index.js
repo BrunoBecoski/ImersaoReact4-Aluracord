@@ -55,7 +55,7 @@ export default function Home() {
             as="form"
             onSubmit={(event) => {
               event.preventDefault();
-              router.push('/chat')
+              router.push(`/chat?username=${username}`);
             }}
             styleSheet={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',

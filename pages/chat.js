@@ -1,14 +1,26 @@
-import React, { useEffect } from 'react';
-import { useState } from 'react/cjs/react.development';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import { createClient } from '@supabase/supabase-js';
 
 import appConfig from '../config.json';
+import { ButtonSendSticker } from '../src/components/ButtonSendSticker';
 
 const supabaseClient = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
+function listenToMessagesInRealTime(addMessage) {
+  return supabaseClient
+    .from('messages')
+    .on('INSERT', (liveResponse) => {
+      addMessage(liveResponse.new);
+    })
+    .subscribe();
+}
+
 export default function ChatPage() {
-  const [message, setMessage] = useState('')
+  const router = useRouter();
+  const loggedInUser = router.query.username;
+  const [message, setMessage] = useState('');
   const [messageList, setMessageList] = useState([]);
 
   useEffect(() => {
@@ -19,11 +31,24 @@ export default function ChatPage() {
       .then(({ data }) => {
         setMessageList(data);
       });
+
+    const subscription = listenToMessagesInRealTime((newMessage) => {
+      setMessageList((currentListValue) => {
+        return [
+          newMessage,
+          ...currentListValue,
+        ]
+      });
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    }
   }, []);
 
   function handleNewMessage(newMessage) {
     const message = {
-      from: 'brunobecoski',
+      from: loggedInUser,
       text: newMessage,
     };
 
@@ -31,10 +56,7 @@ export default function ChatPage() {
       .from('messages')
       .insert([
         message
-      ])
-      .then(({ data }) => {
-        setMessageList([data[0], ...messageList]);
-      })
+      ]).then();
 
     setMessage('');
   }
@@ -75,7 +97,6 @@ export default function ChatPage() {
             padding: '16px',
           }}
         >
-
           <MessageList messages={messageList} />
 
           <Box
@@ -105,6 +126,11 @@ export default function ChatPage() {
                 backgroundColor: appConfig.theme.colors.neutrals[800],
                 marginRight: '12px',
                 color: appConfig.theme.colors.neutrals[200],
+              }}
+            />
+            <ButtonSendSticker
+              onStickerClick={(sticker) => {
+                handleNewMessage(':sticker: ' + sticker);
               }}
             />
           </Box>
@@ -137,7 +163,7 @@ function MessageList(props) {
     <Box
       tag="ul"
       styleSheet={{
-        overflow: 'scroll',
+        overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column-reverse',
         flex: 1,
@@ -188,7 +214,14 @@ function MessageList(props) {
                 {(new Date().toLocaleDateString())}
               </Text>
             </Box>
-            {message.text}
+            {message.text.startsWith(':sticker:')
+              ? (
+                <Image src={message.text.replace(':sticker:', '')} />
+              ) 
+              : (
+                message.text
+              )
+            }
           </Text>
         );
       })}
