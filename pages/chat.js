@@ -216,7 +216,13 @@ function MessageList(props) {
             </Box>
             {message.text.startsWith(':sticker:')
               ? (
-                <Image src={message.text.replace(':sticker:', '')} />
+                <Image 
+                  src={message.text.replace(':sticker:', '')} 
+                  styleSheet={{
+                    maxHeight: '100px',
+                  }
+                 }
+                />
               ) 
               : (
                 message.text
