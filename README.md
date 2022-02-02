@@ -14,8 +14,8 @@
 <br/>
 
 <div align="center">
-  <img src=".github/home.png" height="220px" />
-  <img src=".github/chat.png" height="220px" />
+  <img src=".github/home.png" height="200px" />
+  <img src=".github/chat.png" height="200px" />
 </div>
 
 ## Sobre 
